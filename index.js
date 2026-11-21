@@ -54,6 +54,15 @@ app.get("/", (req, res) => {
   });
 });
 
+// Health check endpoint for monitoring & deployment
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "healthy",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 /* ==========================================================================
    TUITIONS ENDPOINTS (Public, Tutor, Admin)
    ========================================================================== */
