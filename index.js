@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import Stripe from "stripe";
 import {
   usersCollection,
   tuitionsCollection,
@@ -19,6 +20,7 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // CORS configuration
 const allowedOrigins = [
@@ -894,6 +896,216 @@ app.get("/admin/transactions", verifyToken, verifyAdmin, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch transactions",
+    });
+  }
+});
+
+/* ==========================================================================
+   STRIPE PAYMENT & SUBSCRIPTION ENDPOINTS
+   ========================================================================== */
+
+// 1. POST /payments/create-checkout-session - Create Stripe checkout session
+app.post("/payments/create-checkout-session", verifyToken, async (req, res) => {
+  try {
+    const { planType } = req.body;
+
+    const isTutor = planType === "tutor_pro" || req.user.role === "tutor";
+    const amount = isTutor ? 1500 : 1000; // in cents ($15 or $10)
+    const planName = isTutor ? "MentorLagbe Tutor Pro Plan" : "MentorLagbe Student Pro Plan";
+    const planDesc = isTutor
+      ? "Unlimited tuition posts, verified mentor badge & priority listing"
+      : "Priority tuition applications & unlimited bookmarks";
+
+    const origin = req.headers.origin || process.env.CLIENT_URL || "http://localhost:3000";
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      customer_email: req.user.email,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: planName,
+              description: planDesc,
+            },
+            unit_amount: amount,
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        userId: req.user.id,
+        userEmail: req.user.email,
+        userName: req.user.name,
+        userRole: req.user.role,
+        planType: isTutor ? "tutor_pro" : "student_pro",
+      },
+      success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/payment/cancel`,
+    });
+
+    res.status(200).json({
+      success: true,
+      url: session.url,
+      sessionId: session.id,
+    });
+  } catch (error) {
+    console.error("Error creating checkout session:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create checkout session",
+    });
+  }
+});
+
+// 2. POST /payments/verify-session - Verify payment and upgrade user plan
+app.post("/payments/verify-session", verifyToken, async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ success: false, message: "Session ID is required" });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (session.payment_status !== "paid" && session.status !== "complete") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment has not been completed.",
+      });
+    }
+
+    // Check if transaction already saved in payments collection
+    let existingPayment = await paymentsCollection.findOne({ stripeSessionId: sessionId });
+
+    if (!existingPayment) {
+      const isTutor = session.metadata?.planType === "tutor_pro" || req.user.role === "tutor";
+      const amountValue = session.amount_total ? session.amount_total / 100 : (isTutor ? 15 : 10);
+
+      const paymentRecord = {
+        userEmail: session.metadata?.userEmail || req.user.email,
+        userName: session.metadata?.userName || req.user.name,
+        userRole: session.metadata?.userRole || req.user.role,
+        planName: isTutor ? "Tutor Pro ($15)" : "Student Pro ($10)",
+        amount: amountValue,
+        currency: session.currency?.toUpperCase() || "USD",
+        transactionId: session.payment_intent || session.id,
+        stripeSessionId: session.id,
+        paymentStatus: "paid",
+        paidAt: new Date(),
+      };
+
+      await paymentsCollection.insertOne(paymentRecord);
+      existingPayment = paymentRecord;
+
+      // Update user subscription plan to 'pro' in users collection
+      const objectId = toObjectId(req.user.id);
+      const query = objectId
+        ? { $or: [{ _id: objectId }, { _id: req.user.id }, { email: req.user.email }] }
+        : { email: req.user.email };
+
+      await usersCollection.updateOne(query, {
+        $set: { plan: "pro", updatedAt: new Date() },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Pro subscription activated successfully!",
+      payment: existingPayment,
+    });
+  } catch (error) {
+    console.error("Error verifying payment session:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to verify payment session",
+    });
+  }
+});
+
+/* ==========================================================================
+   BOOKMARK / SAVED TUITIONS (Stored inside user document to keep 4 collections)
+   ========================================================================== */
+
+// 1. POST /tuitions/:id/bookmark - Bookmark tuition with free/pro limit check
+app.post("/tuitions/:id/bookmark", verifyToken, verifyStudent, async (req, res) => {
+  try {
+    const tuitionId = req.params.id;
+    const objectId = toObjectId(req.user.id);
+    const query = objectId ? { $or: [{ _id: objectId }, { _id: req.user.id }] } : { _id: req.user.id };
+
+    const user = await usersCollection.findOne(query);
+    const currentBookmarks = Array.isArray(user?.savedTuitionIds) ? user.savedTuitionIds : [];
+
+    // Already bookmarked? Toggle/remove
+    if (currentBookmarks.includes(tuitionId)) {
+      await usersCollection.updateOne(query, {
+        $pull: { savedTuitionIds: tuitionId },
+      });
+      return res.status(200).json({
+        success: true,
+        message: "Tuition removed from saved bookmarks",
+        isBookmarked: false,
+      });
+    }
+
+    // Check free plan limit (max 5 bookmarks)
+    if (req.user.plan !== "pro" && currentBookmarks.length >= 5) {
+      return res.status(403).json({
+        success: false,
+        message: "Free plan limit reached (max 5 saved tuitions). Upgrade to Pro for unlimited bookmarks.",
+      });
+    }
+
+    await usersCollection.updateOne(query, {
+      $addToSet: { savedTuitionIds: tuitionId },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Tuition bookmarked successfully!",
+      isBookmarked: true,
+    });
+  } catch (error) {
+    console.error("Error bookmarking tuition:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to bookmark tuition",
+    });
+  }
+});
+
+// 2. GET /student/saved-tuitions - Fetch student's bookmarked tuitions
+app.get("/student/saved-tuitions", verifyToken, verifyStudent, async (req, res) => {
+  try {
+    const objectId = toObjectId(req.user.id);
+    const query = objectId ? { $or: [{ _id: objectId }, { _id: req.user.id }] } : { _id: req.user.id };
+
+    const user = await usersCollection.findOne(query);
+    const savedIds = Array.isArray(user?.savedTuitionIds) ? user.savedTuitionIds : [];
+
+    if (savedIds.length === 0) {
+      return res.status(200).json({ success: true, tuitions: [] });
+    }
+
+    const objectIds = savedIds.map(toObjectId).filter(Boolean);
+    const tuitions = await tuitionsCollection
+      .find({
+        $or: [{ _id: { $in: objectIds } }, { _id: { $in: savedIds } }],
+      })
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      tuitions,
+    });
+  } catch (error) {
+    console.error("Error fetching saved tuitions:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch saved tuitions",
     });
   }
 });
