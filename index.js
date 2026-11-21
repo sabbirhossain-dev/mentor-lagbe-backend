@@ -36,6 +36,9 @@ const tuitionsCollection = db.collection("tuitions");
 const applicationsCollection = db.collection("applications");
 const paymentsCollection = db.collection("payments");
 
+//post
+app.post("");
+
 // Root Route
 app.get("/", (req, res) => {
   res.json("Server is running...");
