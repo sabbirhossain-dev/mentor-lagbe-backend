@@ -37,7 +37,7 @@ const applicationsCollection = db.collection("applications");
 const paymentsCollection = db.collection("payments");
 
 //post
-app.post("");
+// app.post("");
 
 // Root Route
 app.get("/", (req, res) => {
