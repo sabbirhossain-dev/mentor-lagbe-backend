@@ -1,7 +1,11 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { usersCollection, toObjectId } from "../db.js";
 
-const AUTH_URL = process.env.AUTH_URL || "http://localhost:3000";
+const AUTH_URL =
+  process.env.AUTH_URL ||
+  (process.env.NODE_ENV === "production" || process.env.VERCEL
+    ? "https://mentorlagbe-frontend-three.vercel.app"
+    : "http://localhost:3000");
 const JWKS = createRemoteJWKSet(new URL(`${AUTH_URL}/api/auth/jwks`));
 
 /**
