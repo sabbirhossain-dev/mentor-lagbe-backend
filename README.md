@@ -2,6 +2,9 @@
 
 Express.js and MongoDB REST API backend service powering the **MentorLagbe (Smart Tuition & Mentorship Platform)**.
 
+- **Production API URL:** [https://mentorlagbe-backend-xi.vercel.app](https://mentorlagbe-backend-xi.vercel.app)
+- **Frontend Live App:** [https://mentorlagbe-frontend-three.vercel.app](https://mentorlagbe-frontend-three.vercel.app)
+
 ---
 
 ## 🚀 Overview & Key Capabilities
