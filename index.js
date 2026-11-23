@@ -1,3 +1,4 @@
+import http from "http";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -22,7 +23,32 @@ const app = express();
 const port = process.env.PORT || 5000;
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// CORS configuration
+// Robust CORS and Private Network Access middleware
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  } else {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  }
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+  );
+  res.setHeader("Access-Control-Allow-Private-Network", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
+// CORS configuration fallback
 const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
@@ -31,19 +57,13 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // allow requests with no origin (like mobile apps, curl, or server-to-server)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
-        return callback(null, true);
-      }
-      return callback(null, true); // Permissive for development
-    },
+    origin: true,
     credentials: true,
   }),
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // Root Route
 app.get("/", (req, res) => {
@@ -841,117 +861,132 @@ app.patch(
    ========================================================================== */
 
 // 1. GET /stats/student - Student stats
-app.get("/stats/student", verifyToken, verifyStudent, async (req, res) => {
-  try {
-    const [totalApplied, accepted, pending, rejected] = await Promise.all([
-      applicationsCollection.countDocuments({ studentEmail: req.user.email }),
-      applicationsCollection.countDocuments({
-        studentEmail: req.user.email,
-        status: "accepted",
-      }),
-      applicationsCollection.countDocuments({
-        studentEmail: req.user.email,
-        status: "pending",
-      }),
-      applicationsCollection.countDocuments({
-        studentEmail: req.user.email,
-        status: "rejected",
-      }),
-    ]);
+app.get(
+  ["/stats/student", "/student/stats"],
+  verifyToken,
+  verifyStudent,
+  async (req, res) => {
+    try {
+      const [totalApplied, accepted, pending, rejected] = await Promise.all([
+        applicationsCollection.countDocuments({ studentEmail: req.user.email }),
+        applicationsCollection.countDocuments({
+          studentEmail: req.user.email,
+          status: "accepted",
+        }),
+        applicationsCollection.countDocuments({
+          studentEmail: req.user.email,
+          status: "pending",
+        }),
+        applicationsCollection.countDocuments({
+          studentEmail: req.user.email,
+          status: "rejected",
+        }),
+      ]);
 
-    res.status(200).json({
-      success: true,
-      stats: {
-        totalApplied,
-        accepted,
-        pending,
-        rejected,
-        plan: req.user.plan,
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching student stats:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch student statistics",
-    });
-  }
-});
+      res.status(200).json({
+        success: true,
+        stats: {
+          totalApplied,
+          accepted,
+          pending,
+          rejected,
+          plan: req.user.plan,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching student stats:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch student statistics",
+      });
+    }
+  },
+);
 
 // 2. GET /stats/tutor - Tutor stats
-app.get("/stats/tutor", verifyToken, verifyTutor, async (req, res) => {
-  try {
-    const [totalPosted, activeApproved, totalApplicants] = await Promise.all([
-      tuitionsCollection.countDocuments({ tutorEmail: req.user.email }),
-      tuitionsCollection.countDocuments({
-        tutorEmail: req.user.email,
-        approvalStatus: "approved",
-        isActive: true,
-      }),
-      applicationsCollection.countDocuments({ tutorEmail: req.user.email }),
-    ]);
+app.get(
+  ["/stats/tutor", "/tutor/stats"],
+  verifyToken,
+  verifyTutor,
+  async (req, res) => {
+    try {
+      const [totalPosted, activeApproved, totalApplicants] = await Promise.all([
+        tuitionsCollection.countDocuments({ tutorEmail: req.user.email }),
+        tuitionsCollection.countDocuments({
+          tutorEmail: req.user.email,
+          approvalStatus: "approved",
+          isActive: true,
+        }),
+        applicationsCollection.countDocuments({ tutorEmail: req.user.email }),
+      ]);
 
-    res.status(200).json({
-      success: true,
-      stats: {
-        totalPosted,
-        activeApproved,
-        totalApplicants,
-        plan: req.user.plan,
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching tutor stats:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch tutor statistics",
-    });
-  }
-});
+      res.status(200).json({
+        success: true,
+        stats: {
+          totalPosted,
+          activeApproved,
+          totalApplicants,
+          plan: req.user.plan,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching tutor stats:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch tutor statistics",
+      });
+    }
+  },
+);
 
 // 3. GET /stats/admin - Admin platform stats
-app.get("/stats/admin", verifyToken, verifyAdmin, async (req, res) => {
-  try {
-    const [
-      totalUsers,
-      totalTutors,
-      totalStudents,
-      pendingTuitions,
-      approvedTuitions,
-      totalPayments,
-    ] = await Promise.all([
-      usersCollection.countDocuments({}),
-      usersCollection.countDocuments({ role: "tutor" }),
-      usersCollection.countDocuments({ role: "student" }),
-      tuitionsCollection.countDocuments({ approvalStatus: "pending" }),
-      tuitionsCollection.countDocuments({ approvalStatus: "approved" }),
-      paymentsCollection.find({ paymentStatus: "paid" }).toArray(),
-    ]);
-
-    const totalRevenue = totalPayments.reduce(
-      (sum, p) => sum + (Number(p.amount) || 0),
-      0,
-    );
-
-    res.status(200).json({
-      success: true,
-      stats: {
+app.get(
+  ["/stats/admin", "/admin/stats"],
+  verifyToken,
+  verifyAdmin,
+  async (req, res) => {
+    try {
+      const [
         totalUsers,
         totalTutors,
         totalStudents,
         pendingTuitions,
         approvedTuitions,
-        totalRevenue,
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching admin stats:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch admin statistics",
-    });
-  }
-});
+        totalPayments,
+      ] = await Promise.all([
+        usersCollection.countDocuments({}),
+        usersCollection.countDocuments({ role: "tutor" }),
+        usersCollection.countDocuments({ role: "student" }),
+        tuitionsCollection.countDocuments({ approvalStatus: "pending" }),
+        tuitionsCollection.countDocuments({ approvalStatus: "approved" }),
+        paymentsCollection.find({ paymentStatus: "paid" }).toArray(),
+      ]);
+
+      const totalRevenue = totalPayments.reduce(
+        (sum, p) => sum + (Number(p.amount) || 0),
+        0,
+      );
+
+      res.status(200).json({
+        success: true,
+        stats: {
+          totalUsers,
+          totalTutors,
+          totalStudents,
+          pendingTuitions,
+          approvedTuitions,
+          totalRevenue,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch admin statistics",
+      });
+    }
+  },
+);
 
 // 4. GET /admin/transactions - Transaction records for admin
 app.get("/admin/transactions", verifyToken, verifyAdmin, async (req, res) => {
@@ -1220,9 +1255,11 @@ app.get(
   },
 );
 
+const server = http.createServer({ maxHeaderSize: 131072 }, app);
+
 if (process.env.NODE_ENV !== "test") {
-  app.listen(port, () => {
-    console.log(`MentorLagbe Backend server is running on port ${port}`);
+  server.listen(port, () => {
+    console.log(`MentorLagbe Backend server is running on port ${port} (maxHeaderSize: 128KB)`);
   });
 }
 

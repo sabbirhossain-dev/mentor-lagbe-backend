@@ -1,12 +1,24 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { usersCollection, toObjectId } from "../db.js";
 
-const AUTH_URL =
-  process.env.AUTH_URL ||
-  (process.env.NODE_ENV === "production" || process.env.VERCEL
-    ? "https://mentorlagbe-frontend-three.vercel.app"
-    : "http://localhost:3000");
-const JWKS = createRemoteJWKSet(new URL(`${AUTH_URL}/api/auth/jwks`));
+// Determine remote JWKS endpoints.
+// If deployed on Vercel or in production, localhost is unreachable, so prioritize production.
+const PROD_AUTH_URL = "https://mentorlagbe-frontend-three.vercel.app";
+const LOCAL_AUTH_URL = "http://localhost:3000";
+
+const configuredAuthUrl = process.env.AUTH_URL?.trim();
+const isProd = Boolean(process.env.VERCEL || process.env.NODE_ENV === "production");
+
+const primaryBaseUrl = isProd
+  ? (configuredAuthUrl && !configuredAuthUrl.includes("localhost") && !configuredAuthUrl.includes("127.0.0.1")
+      ? configuredAuthUrl
+      : PROD_AUTH_URL)
+  : (configuredAuthUrl || LOCAL_AUTH_URL);
+
+const fallbackBaseUrl = primaryBaseUrl.includes("vercel.app") ? LOCAL_AUTH_URL : PROD_AUTH_URL;
+
+const primaryJWKS = createRemoteJWKSet(new URL(`${primaryBaseUrl.replace(/\/$/, "")}/api/auth/jwks`));
+const fallbackJWKS = createRemoteJWKSet(new URL(`${fallbackBaseUrl.replace(/\/$/, "")}/api/auth/jwks`));
 
 /**
  * Verify JWT token from Better Auth and attach the user record from MongoDB
@@ -23,7 +35,20 @@ export const verifyToken = async (req, res, next) => {
     }
 
     const token = authHeader.split(" ")[1];
-    const { payload } = await jwtVerify(token, JWKS);
+    let payload;
+
+    try {
+      const verified = await jwtVerify(token, primaryJWKS);
+      payload = verified.payload;
+    } catch (primaryErr) {
+      // If primary JWKS failed, try fallback JWKS seamlessly
+      try {
+        const verified = await jwtVerify(token, fallbackJWKS);
+        payload = verified.payload;
+      } catch {
+        throw primaryErr;
+      }
+    }
 
     if (!payload.sub) {
       return res.status(401).json({
@@ -34,11 +59,13 @@ export const verifyToken = async (req, res, next) => {
 
     // Always fetch latest user data and role directly from database
     const objectId = toObjectId(payload.sub);
-    const query = objectId
-      ? { $or: [{ _id: objectId }, { _id: payload.sub }] }
-      : { _id: payload.sub };
+    const orConditions = [{ _id: payload.sub }];
+    if (objectId) orConditions.push({ _id: objectId });
+    if (payload.email && typeof payload.email === "string") {
+      orConditions.push({ email: payload.email });
+    }
 
-    const user = await usersCollection.findOne(query);
+    const user = await usersCollection.findOne({ $or: orConditions });
 
     if (!user) {
       return res.status(401).json({
