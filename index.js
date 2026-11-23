@@ -538,7 +538,7 @@ app.post("/applications", verifyToken, verifyStudent, async (req, res) => {
       });
     }
 
-    // Check duplicate application
+    // Checking the duplicate application
     const existingApp = await applicationsCollection.findOne({
       tuitionId: tuition._id.toString(),
       studentEmail: req.user.email,

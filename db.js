@@ -23,6 +23,7 @@ export const applicationsCollection = db.collection("applications");
 export const paymentsCollection = db.collection("payments");
 
 //Safely converts an ID string or ObjectId into a MongoDB ObjectId
+
 export function toObjectId(id) {
   if (!id) return null;
   if (id instanceof ObjectId) return id;
