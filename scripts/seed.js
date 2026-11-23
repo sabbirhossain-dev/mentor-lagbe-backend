@@ -2,7 +2,7 @@ import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
 
 dotenv.config();
-
+// Create a new MongoClient
 const client = new MongoClient(process.env.MONGODB_URI);
 
 const sampleTuitions = [
@@ -14,8 +14,10 @@ const sampleTuitions = [
     location: "Online (Google Meet)",
     monthlyFee: 3500,
     daysPerWeek: "3 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80",
-    description: "Comprehensive calculus, coordinate geometry, and vectors masterclass for HSC and BUET/Medical admission aspirants. Includes weekly problem-solving sheets and recorded lectures.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80",
+    description:
+      "Comprehensive calculus, coordinate geometry, and vectors masterclass for HSC and BUET/Medical admission aspirants. Includes weekly problem-solving sheets and recorded lectures.",
     tutorName: "Sabbir Hossain",
     tutorEmail: "sabbirt@gmail.com",
     approvalStatus: "approved",
@@ -30,8 +32,10 @@ const sampleTuitions = [
     location: "Dhanmondi, Dhaka",
     monthlyFee: 4000,
     daysPerWeek: "3 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80",
-    description: "Deep dive into Mechanics, Optics, and Electricity. Every chapter followed by model tests based on recent board question patterns. Personal attention guaranteed.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80",
+    description:
+      "Deep dive into Mechanics, Optics, and Electricity. Every chapter followed by model tests based on recent board question patterns. Personal attention guaranteed.",
     tutorName: "Tanvir Ahmed",
     tutorEmail: "tanvir.tutor@example.com",
     approvalStatus: "approved",
@@ -46,8 +50,10 @@ const sampleTuitions = [
     location: "Online (Discord & Zoom)",
     monthlyFee: 5000,
     daysPerWeek: "2 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80",
-    description: "1-on-1 and small batch mentorship to transition into software engineering. Covering React 19, Next.js, Node.js, TypeScript, MongoDB, and production deployments.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80",
+    description:
+      "1-on-1 and small batch mentorship to transition into software engineering. Covering React 19, Next.js, Node.js, TypeScript, MongoDB, and production deployments.",
     tutorName: "Sabbir Hossain",
     tutorEmail: "sabbirt@gmail.com",
     approvalStatus: "approved",
@@ -62,8 +68,10 @@ const sampleTuitions = [
     location: "Online (Zoom)",
     monthlyFee: 4500,
     daysPerWeek: "3 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=800&q=80",
-    description: "Specialized mock-based training for IELTS Academic. Daily speaking evaluations, weekly essay corrections, and listening/reading strategic techniques for band 7.5 or higher.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=800&q=80",
+    description:
+      "Specialized mock-based training for IELTS Academic. Daily speaking evaluations, weekly essay corrections, and listening/reading strategic techniques for band 7.5 or higher.",
     tutorName: "Farhana Yasmin",
     tutorEmail: "farhana.ielts@example.com",
     approvalStatus: "approved",
@@ -78,8 +86,10 @@ const sampleTuitions = [
     location: "Uttara, Dhaka",
     monthlyFee: 4200,
     daysPerWeek: "3 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?auto=format&fit=crop&w=800&q=80",
-    description: "Master organic synthesis, IUPAC nomenclature, isomerism, and reaction mechanisms. Dedicated chapter tests and medical admission standard question reviews.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?auto=format&fit=crop&w=800&q=80",
+    description:
+      "Master organic synthesis, IUPAC nomenclature, isomerism, and reaction mechanisms. Dedicated chapter tests and medical admission standard question reviews.",
     tutorName: "Dr. Rakib Hasan",
     tutorEmail: "rakib.chem@example.com",
     approvalStatus: "approved",
@@ -94,8 +104,10 @@ const sampleTuitions = [
     location: "Online",
     monthlyFee: 6000,
     daysPerWeek: "3 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=800&q=80",
-    description: "Edexcel and Cambridge IGCSE Math D past paper practice (2015-2025). Formula memorization tricks, exam timing management, and guaranteed A* grade guidance.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=800&q=80",
+    description:
+      "Edexcel and Cambridge IGCSE Math D past paper practice (2015-2025). Formula memorization tricks, exam timing management, and guaranteed A* grade guidance.",
     tutorName: "Mahmudul Karim",
     tutorEmail: "mahmud.math@example.com",
     approvalStatus: "approved",
@@ -110,8 +122,10 @@ const sampleTuitions = [
     location: "Online",
     monthlyFee: 2500,
     daysPerWeek: "2 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
-    description: "Covers C Programming, HTML/Web Design, Number Systems, and Database Management System (DBMS). Hand-written concise note sheets provided.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
+    description:
+      "Covers C Programming, HTML/Web Design, Number Systems, and Database Management System (DBMS). Hand-written concise note sheets provided.",
     tutorName: "Sabu Rahman",
     tutorEmail: "saabu@gmail.com",
     approvalStatus: "approved",
@@ -126,8 +140,10 @@ const sampleTuitions = [
     location: "Mirpur, Dhaka",
     monthlyFee: 4500,
     daysPerWeek: "3 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&w=800&q=80",
-    description: "Line-by-line discussion of textbook with medical admission previous year MCQs analysis. Daily 50-mark chapter tests with negative marking simulator.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&w=800&q=80",
+    description:
+      "Line-by-line discussion of textbook with medical admission previous year MCQs analysis. Daily 50-mark chapter tests with negative marking simulator.",
     tutorName: "Nusrat Jahan",
     tutorEmail: "nusrat.bio@example.com",
     approvalStatus: "approved",
@@ -142,8 +158,10 @@ const sampleTuitions = [
     location: "Online",
     monthlyFee: 2800,
     daysPerWeek: "2 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80",
-    description: "Build English fluency without fear. Interactive speaking sessions, vocabulary expansion, accent polishing, and email writing etiquette for students and professionals.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80",
+    description:
+      "Build English fluency without fear. Interactive speaking sessions, vocabulary expansion, accent polishing, and email writing etiquette for students and professionals.",
     tutorName: "Ayesha Siddiqua",
     tutorEmail: "ayesha.eng@example.com",
     approvalStatus: "approved",
@@ -158,8 +176,10 @@ const sampleTuitions = [
     location: "Chattogram Sadar, Chattogram",
     monthlyFee: 3200,
     daysPerWeek: "3 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80",
-    description: "Clear understanding of debit-credit fundamentals, ledger entries, bank reconciliation, depreciation methods, and partnership accounts with board CQ solutions.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80",
+    description:
+      "Clear understanding of debit-credit fundamentals, ledger entries, bank reconciliation, depreciation methods, and partnership accounts with board CQ solutions.",
     tutorName: "Kamrul Islam",
     tutorEmail: "kamrul.acc@example.com",
     approvalStatus: "approved",
@@ -174,8 +194,10 @@ const sampleTuitions = [
     location: "Gulshan, Dhaka",
     monthlyFee: 3500,
     daysPerWeek: "3 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80",
-    description: "Strengthening mental math, basic algebra, geometry, and elementary physics & chemistry foundations to prepare younger students for future competitive exams.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80",
+    description:
+      "Strengthening mental math, basic algebra, geometry, and elementary physics & chemistry foundations to prepare younger students for future competitive exams.",
     tutorName: "Sabu Rahman",
     tutorEmail: "saabu@gmail.com",
     approvalStatus: "approved",
@@ -190,8 +212,10 @@ const sampleTuitions = [
     location: "Online",
     monthlyFee: 3000,
     daysPerWeek: "2 Days / Week",
-    bannerImage: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=80",
-    description: "Microeconomics demand-supply curve modeling, macroeconomics GDP, inflation analysis, and introductory business statistics made easy with practical graphs.",
+    bannerImage:
+      "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=80",
+    description:
+      "Microeconomics demand-supply curve modeling, macroeconomics GDP, inflation analysis, and introductory business statistics made easy with practical graphs.",
     tutorName: "Shahriar Noman",
     tutorEmail: "shahriar.econ@example.com",
     approvalStatus: "approved",
@@ -216,7 +240,9 @@ async function seed() {
     }
 
     const result = await tuitionsCollection.insertMany(sampleTuitions);
-    console.log(`Successfully seeded ${result.insertedCount} tuitions into MongoDB!`);
+    console.log(
+      `Successfully seeded ${result.insertedCount} tuitions into MongoDB!`,
+    );
   } catch (error) {
     console.error("Seeding failed:", error);
   } finally {

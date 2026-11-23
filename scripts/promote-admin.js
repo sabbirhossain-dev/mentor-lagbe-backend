@@ -10,6 +10,7 @@ if (!email) {
   process.exit(1);
 }
 
+// Create a new MongoClient
 const client = new MongoClient(process.env.MONGODB_URI);
 
 async function promote() {
@@ -27,7 +28,7 @@ async function promote() {
 
     const result = await usersCollection.updateOne(
       { email },
-      { $set: { role: "admin", updatedAt: new Date().toISOString() } }
+      { $set: { role: "admin", updatedAt: new Date().toISOString() } },
     );
 
     if (result.modifiedCount > 0 || user.role === "admin") {

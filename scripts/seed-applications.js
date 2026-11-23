@@ -1,9 +1,19 @@
-import { tuitionsCollection, usersCollection, applicationsCollection } from "../db.js";
+import {
+  tuitionsCollection,
+  usersCollection,
+  applicationsCollection,
+} from "../db.js";
 
 async function seedApplications() {
   try {
-    const tuitions = await tuitionsCollection.find({ approvalStatus: "approved" }).limit(4).toArray();
-    const students = await usersCollection.find({ role: "student" }).limit(3).toArray();
+    const tuitions = await tuitionsCollection
+      .find({ approvalStatus: "approved" })
+      .limit(4)
+      .toArray();
+    const students = await usersCollection
+      .find({ role: "student" })
+      .limit(3)
+      .toArray();
 
     if (tuitions.length === 0 || students.length === 0) {
       console.log("Not enough tuitions or students to seed applications.");
@@ -12,10 +22,13 @@ async function seedApplications() {
 
     const currentCount = await applicationsCollection.countDocuments();
     if (currentCount > 0) {
-      console.log(`Applications collection already has ${currentCount} records. Skipping seed.`);
+      console.log(
+        `Applications collection already has ${currentCount} records. Skipping seed.`,
+      );
       process.exit(0);
     }
 
+    // Sample applications data
     const sampleApplications = [
       {
         tuitionId: tuitions[0]._id.toString(),
@@ -28,7 +41,8 @@ async function seedApplications() {
         studentEmail: students[0].email,
         studentPhone: "01711-234567",
         preferredSchedule: "Sat-Mon-Wed 6:00 PM",
-        studentNote: "Looking forward to improving my calculus problem-solving speed for HSC.",
+        studentNote:
+          "Looking forward to improving my calculus problem-solving speed for HSC.",
         status: "pending",
         appliedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
       },
@@ -65,7 +79,9 @@ async function seedApplications() {
     ];
 
     const result = await applicationsCollection.insertMany(sampleApplications);
-    console.log(`Successfully seeded ${result.insertedCount} sample applications!`);
+    console.log(
+      `Successfully seeded ${result.insertedCount} sample applications!`,
+    );
   } catch (error) {
     console.error("Seeding applications failed:", error);
   } finally {

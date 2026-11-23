@@ -10,12 +10,15 @@ export const config = {
   stripeSecretKey: process.env.STRIPE_SECRET_KEY,
 };
 
+// Function to validate the configuration
 export function validateConfig() {
   const missing = [];
   if (!config.mongodbUri) missing.push("MONGODB_URI");
   if (!config.stripeSecretKey) missing.push("STRIPE_SECRET_KEY");
 
   if (missing.length > 0) {
-    console.warn(`[Config Warning] Missing environment variables: ${missing.join(", ")}`);
+    console.warn(
+      `[Config Warning] Missing environment variables: ${missing.join(", ")}`,
+    );
   }
 }
