@@ -17,7 +17,7 @@ Express.js and MongoDB REST API backend service powering the **MentorLagbe (Smar
   - `payments` (`_id, userEmail, userName, userRole, planName, amount, currency, transactionId, stripeSessionId, paymentStatus, paidAt`)
 - **Stripe Subscriptions Integration:** Checkout session creation and payment verification for Tutor Pro ($15) and Student Pro ($10).
 - **Server-Side Search & Filter:** Dynamic MongoDB query engine supporting subject regex matching, class level filtering, and pagination.
-- **Admin Moderation & Role Assignment:** Endpoints to approve/reject tuitions and assign user roles.
+- **Admin Moderation & Role Assignment:** Endpoints to approve/reject tuitions and assign user role.
 
 ---
 
@@ -35,6 +35,7 @@ Express.js and MongoDB REST API backend service powering the **MentorLagbe (Smar
 ## 📡 Core API Endpoints
 
 ### Public & Tuitions
+
 - `GET /` - Root health endpoint
 - `GET /health` - Server uptime & status
 - `GET /tuitions` - Search, filter, and pagination (`?search=&subject=&classLevel=&mode=&sort=&page=&limit=`)
@@ -42,6 +43,7 @@ Express.js and MongoDB REST API backend service powering the **MentorLagbe (Smar
 - `GET /tuitions/:id` - Single tuition batch details
 
 ### Tutor Operations (Protected)
+
 - `POST /tuitions` - Create tuition post (enforces max 2 posts for Free Plan; unlimited for Pro)
 - `GET /tutor/my-tuitions` - Tutor's created listings
 - `PATCH /tuitions/:id` - Update tuition details
@@ -51,6 +53,7 @@ Express.js and MongoDB REST API backend service powering the **MentorLagbe (Smar
 - `PATCH /applications/:id/status` - Accept or reject an application
 
 ### Student Operations (Protected)
+
 - `POST /applications` - Apply for tuition (validates approved status & prevents duplicates)
 - `GET /student/my-applications` - View submitted applications
 - `DELETE /applications/:id` - Cancel pending application
@@ -58,10 +61,12 @@ Express.js and MongoDB REST API backend service powering the **MentorLagbe (Smar
 - `GET /student/saved-tuitions` - Retrieve bookmarked tuitions
 
 ### Stripe Payments (Protected)
+
 - `POST /payments/create-checkout-session` - Generate Stripe checkout session for Pro upgrade
 - `POST /payments/verify-session` - Verify checkout session, log transaction, and update user `plan: 'pro'`
 
 ### Admin Moderation (Protected)
+
 - `GET /admin/users` - View all registered users
 - `PATCH /admin/users/:id/role` - Update user role (`student`, `tutor`, `admin`)
 - `GET /admin/tuitions` - View all tuition listings for moderation
